@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreeTransport App</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header>
+        <h1><i class="fas fa-bus"></i> FreeTransport</h1>
+    </header>
+
+    <main>
+        <section id="map-container"></section>
+
+        <section id="controls">
+            <div class="search-box">
+                <input type="text" id="destination" placeholder="Where to?">
+                <button id="find-route">
+                    <i class="fas fa-route"></i> Find Route
+                </button>
+            </div>
+
+            <div class="transport-types">
+                <button data-type="bus">
+                    <i class="fas fa-bus"></i> Bus
+                </button>
+                <button data-type="train">
+                    <i class="fas fa-train"></i> Train
+                </button>
+                <button data-type="bike">
+                    <i class="fas fa-bicycle"></i> Bike
+                </button>
+            </div>
+
+            <div class="location-controls">
+                <button id="current-location">
+                    <i class="fas fa-location-dot"></i> Use My Location
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><i class="fas fa-heart"></i> Your free transportation companion</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
