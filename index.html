@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FreeTransport App with Search</title>
+    <title>FreeTransport App - Fixed Search</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -35,17 +35,28 @@
             color: #3498db;
         }
 
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
+        }
+
         #map-container {
-            height: 500px;
+            height: 450px;
             width: 100%;
             background: #e0e0e0;
-            z-index: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
 
         #controls {
             padding: 1.5rem;
             background: white;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
         .search-container {
@@ -68,6 +79,12 @@
             font-size: 16px;
             background: #f9f9f9;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: #3498db;
+            outline: none;
         }
 
         .search-box i.fa-search {
@@ -86,6 +103,11 @@
             overflow-y: auto;
             display: none;
             z-index: 1000;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 5px;
         }
 
         .search-result-item {
@@ -95,6 +117,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            transition: background-color 0.2s;
         }
 
         .search-result-item:hover {
@@ -103,6 +126,7 @@
 
         .search-result-item i {
             color: #3498db;
+            min-width: 20px;
         }
 
         .transport-types {
@@ -132,6 +156,10 @@
 
         .transport-types button.active {
             background: #3498db;
+            color: white;
+        }
+
+        .transport-types button.active i {
             color: white;
         }
 
@@ -171,11 +199,43 @@
         .route-info h3 {
             color: #01579b;
             margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .route-info p {
             margin: 5px 0;
             color: #0277bd;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f8f9fa;
+            margin-top: 15px;
+        }
+
+        .status-indicator i {
+            font-size: 18px;
+        }
+
+        .success {
+            color: #27ae60;
+        }
+
+        .error {
+            color: #e74c3c;
+        }
+
+        .loading {
+            color: #3498db;
         }
 
         footer {
@@ -190,7 +250,7 @@
             gap: 8px;
         }
 
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
             .transport-types {
                 flex-direction: column;
             }
@@ -202,6 +262,10 @@
             #map-container {
                 height: 400px;
             }
+            
+            .app-container {
+                padding: 10px;
+            }
         }
     </style>
 </head>
@@ -211,16 +275,21 @@
         <p>Search for locations and find the best routes</p>
     </header>
 
-    <main>
+    <div class="app-container">
         <section id="map-container"></section>
         
         <section id="controls">
             <div class="search-container">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="destination" placeholder="Search for a location...">
+                    <input type="text" id="destination" placeholder="Search for a location (e.g., Laban, Paris, etc.)">
+                    <div class="search-results" id="search-results"></div>
                 </div>
-                <div class="search-results" id="search-results"></div>
+                
+                <div class="status-indicator" id="status">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Enter a location to search</span>
+                </div>
             </div>
             
             <div class="transport-types">
@@ -243,11 +312,11 @@
             
             <div class="route-info" id="route-info">
                 <h3><i class="fas fa-route"></i> Route Information</h3>
-                <p id="route-summary">Finding route...</p>
-                <p id="route-details">Distance: Calculating... | Duration: Calculating...</p>
+                <p id="route-summary">Enter a destination to see route information</p>
+                <p id="route-details"></p>
             </div>
         </section>
-    </main>
+    </div>
 
     <footer>
         <p><i class="fas fa-heart"></i> Your free transportation companion</p>
@@ -256,21 +325,20 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // Initialize map
-        const map = L.map('map-container').setView([51.505, -0.09], 13); 
+        const map = L.map('map-container').setView([0, 0], 2);
 
         // Add tile layer (OpenStreetMap)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        // Add a marker
-        let marker = L.marker([51.5, -0.09]).addTo(map)
-            .bindPopup('Central Station')
-            .openPopup();
-        
-        // Route layer
+        // Variables to store locations and markers
+        let userLocation = null;
+        let destination = null;
+        let userMarker = null;
+        let destinationMarker = null;
         let routeLayer = null;
-        
+
         // Transport selection
         const transportButtons = document.querySelectorAll('.transport-types button');
         let selectedTransport = 'bus';
@@ -280,12 +348,19 @@
                 transportButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 selectedTransport = button.dataset.type;
-                console.log(`Selected transport: ${selectedTransport}`);
+                
+                // If we have both locations, recalculate route
+                if (userLocation && destination) {
+                    calculateRoute();
+                }
             });
         });
 
         // Current location feature
         document.getElementById('current-location').addEventListener('click', () => {
+            const statusIndicator = document.getElementById('status');
+            statusIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Detecting your location...</span>';
+            
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(position => {
                     const userLat = position.coords.latitude;
@@ -294,23 +369,39 @@
                     map.setView([userLat, userLng], 15);
                     
                     // Remove existing user marker if any
-                    if (window.userMarker) {
-                        map.removeLayer(window.userMarker);
+                    if (userMarker) {
+                        map.removeLayer(userMarker);
                     }
                     
                     // Add new marker
-                    window.userMarker = L.marker([userLat, userLng])
-                        .addTo(map)
-                        .bindPopup("Your Location")
-                        .openPopup();
-                        
-                    // Store user location for routing
-                    window.userLocation = { lat: userLat, lng: userLng };
-                }, () => {
-                    alert("Could not get your location. Please enable location services.");
+                    userMarker = L.marker([userLat, userLng], {
+                        icon: L.divIcon({
+                            className: 'user-location-marker',
+                            html: '<div class="pulse-dot"></div>',
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 10]
+                        })
+                    }).addTo(map).bindPopup("Your Location").openPopup();
+                    
+                    // Store user location
+                    userLocation = { lat: userLat, lng: userLng };
+                    
+                    // Update status
+                    statusIndicator.innerHTML = '<i class="fas fa-check-circle success"></i> <span>Location found!</span>';
+                    
+                    // If we have a destination, calculate route
+                    if (destination) {
+                        calculateRoute();
+                    }
+                }, (error) => {
+                    let errorMessage = "Could not get your location.";
+                    if (error.code === error.PERMISSION_DENIED) {
+                        errorMessage = "Location permission denied. Please enable location services in your browser settings.";
+                    }
+                    statusIndicator.innerHTML = `<i class="fas fa-exclamation-circle error"></i> <span>${errorMessage}</span>`;
                 });
             } else {
-                alert("Geolocation is not supported by your browser");
+                statusIndicator.innerHTML = '<i class="fas fa-exclamation-circle error"></i> <span>Geolocation is not supported by your browser</span>';
             }
         });
 
@@ -320,6 +411,7 @@
         // Search functionality
         const searchInput = document.getElementById('destination');
         const searchResults = document.getElementById('search-results');
+        const statusIndicator = document.getElementById('status');
         
         // Debounce function to limit API calls
         function debounce(func, wait) {
@@ -334,14 +426,22 @@
         searchInput.addEventListener('input', debounce(function() {
             const query = this.value.trim();
             
-            if (query.length < 3) {
+            if (query.length < 2) {
                 searchResults.style.display = 'none';
+                statusIndicator.innerHTML = '<i class="fas fa-info-circle"></i> <span>Enter at least 2 characters to search</span>';
                 return;
             }
             
+            statusIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Searching locations...</span>';
+            
             // Use Nominatim API for search
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.length > 0) {
                         searchResults.innerHTML = '';
@@ -365,76 +465,93 @@
                                 const lon = parseFloat(result.lon);
                                 map.setView([lat, lon], 15);
                                 
-                                // Remove existing marker
-                                if (marker) {
-                                    map.removeLayer(marker);
+                                // Remove existing destination marker
+                                if (destinationMarker) {
+                                    map.removeLayer(destinationMarker);
                                 }
                                 
                                 // Add new marker
-                                marker = L.marker([lat, lon])
-                                    .addTo(map)
-                                    .bindPopup(result.display_name)
-                                    .openPopup();
+                                destinationMarker = L.marker([lat, lon], {
+                                    icon: L.icon({
+                                        iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+                                        iconSize: [25, 41],
+                                        iconAnchor: [12, 41]
+                                    })
+                                }).addTo(map).bindPopup(result.display_name).openPopup();
                                 
                                 // Store destination
-                                window.destination = { 
+                                destination = { 
                                     name: result.display_name,
                                     lat: lat,
                                     lng: lon
                                 };
                                 
+                                statusIndicator.innerHTML = `<i class="fas fa-check-circle success"></i> <span>Destination set to: ${result.display_name.split(',')[0]}</span>`;
+                                
                                 // If we have user location, show route
-                                if (window.userLocation) {
+                                if (userLocation) {
                                     calculateRoute();
                                 } else {
                                     document.getElementById('route-info').style.display = 'block';
                                     document.getElementById('route-summary').innerHTML = 
                                         `<i class="fas fa-info-circle"></i> Destination set to: ${result.display_name.split(',')[0]}`;
                                     document.getElementById('route-details').innerHTML = 
-                                        'Enable location services to see route details';
+                                        'Click "Use My Location" to see route details';
                                 }
                             });
                             
                             searchResults.appendChild(item);
                         });
                         searchResults.style.display = 'block';
+                        statusIndicator.innerHTML = `<i class="fas fa-check-circle success"></i> <span>Found ${data.length} locations</span>`;
                     } else {
                         searchResults.style.display = 'none';
+                        statusIndicator.innerHTML = '<i class="fas fa-exclamation-circle error"></i> <span>No locations found. Try a different search term.</span>';
                     }
                 })
                 .catch(error => {
                     console.error('Search error:', error);
                     searchResults.style.display = 'none';
+                    statusIndicator.innerHTML = `<i class="fas fa-exclamation-circle error"></i> <span>Search failed: ${error.message}</span>`;
                 });
         }, 300));
         
         // Close search results when clicking outside
         document.addEventListener('click', (e) => {
-            if (!searchResults.contains(e.target) {
+            if (!searchResults.contains(e.target) && e.target !== searchInput) {
                 searchResults.style.display = 'none';
             }
         });
         
         // Calculate route function
         function calculateRoute() {
-            if (!window.userLocation || !window.destination) {
-                alert("Please set both your location and destination first");
+            if (!userLocation || !destination) {
+                statusIndicator.innerHTML = '<i class="fas fa-exclamation-circle error"></i> <span>Please set both your location and destination first</span>';
                 return;
             }
             
             document.getElementById('route-info').style.display = 'block';
             document.getElementById('route-summary').innerHTML = 
-                `<i class="fas fa-sync fa-spin"></i> Calculating ${selectedTransport} route to ${window.destination.name.split(',')[0]}`;
+                `<i class="fas fa-sync fa-spin"></i> Calculating ${selectedTransport} route to ${destination.name.split(',')[0]}`;
+            
+            statusIndicator.innerHTML = `<i class="fas fa-sync fa-spin"></i> <span>Calculating ${selectedTransport} route...</span>`;
             
             // Determine transport profile
             let profile = 'driving'; // default for bus/train
             if (selectedTransport === 'bike') {
                 profile = 'cycling';
+            } else if (selectedTransport === 'train') {
+                profile = 'driving'; // No train-specific profile, using driving as approximation
             }
             
             // Use OSRM API for routing
-            fetch(`https://router.project-osrm.org/route/v1/${profile}/${window.userLocation.lng},${window.userLocation.lat};${window.destination.lng},${window.destination.lat}?overview=full&geometries=geojson`)
-                .then(response => response.json())
+            fetch(`https://router.project-osrm.org/route/v1/${profile}/${userLocation.lng},${userLocation.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Routing service unavailable');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.routes && data.routes.length > 0) {
                         const route = data.routes[0];
@@ -464,15 +581,18 @@
                         const duration = Math.floor(route.duration / 60);
                         
                         document.getElementById('route-summary').innerHTML = 
-                            `<i class="fas fa-check-circle" style="color:#27ae60"></i> ${selectedTransport.charAt(0).toUpperCase() + selectedTransport.slice(1)} route to ${window.destination.name.split(',')[0]}`;
+                            `<i class="fas fa-check-circle" style="color:#27ae60"></i> ${selectedTransport.charAt(0).toUpperCase() + selectedTransport.slice(1)} route to ${destination.name.split(',')[0]}`;
                             
                         document.getElementById('route-details').innerHTML = 
                             `<i class="fas fa-road"></i> Distance: ${distance} km | <i class="fas fa-clock"></i> Duration: ${duration} minutes`;
+                            
+                        statusIndicator.innerHTML = `<i class="fas fa-check-circle success"></i> <span>Route calculated successfully!</span>`;
                     } else {
                         document.getElementById('route-summary').innerHTML = 
-                            `<i class="fas fa-exclamation-triangle" style="color:#e74c3c"></i> No route found to ${window.destination.name.split(',')[0]}`;
+                            `<i class="fas fa-exclamation-triangle" style="color:#e74c3c"></i> No route found to ${destination.name.split(',')[0]}`;
                         document.getElementById('route-details').innerHTML = 
                             'Please try another location or transport type';
+                        statusIndicator.innerHTML = `<i class="fas fa-exclamation-circle error"></i> <span>No route found. Try a different transport mode.</span>`;
                     }
                 })
                 .catch(error => {
@@ -481,16 +601,13 @@
                         `<i class="fas fa-exclamation-triangle" style="color:#e74c3c"></i> Error calculating route`;
                     document.getElementById('route-details').innerHTML = 
                         'Please try again later or check your connection';
+                    statusIndicator.innerHTML = `<i class="fas fa-exclamation-circle error"></i> <span>Routing failed: ${error.message}</span>`;
                 });
         }
         
-        // Add route calculation to transport buttons
-        transportButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                if (window.userLocation && window.destination) {
-                    calculateRoute();
-                }
-            });
+        // Initial instructions
+        map.whenReady(() => {
+            statusIndicator.innerHTML = '<i class="fas fa-info-circle"></i> <span>Enter a location to search or use "My Location"</span>';
         });
     </script>
 </body>
