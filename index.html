@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RouteFinder - Car, Bike & Walk</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <title>RouteFinder - AI Video Generator</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -13,728 +12,740 @@
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
+        
         body {
-            background-color: #f5f5f5;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        }
-
-        header {
-            background: linear-gradient(to right, #2c3e50, #3498db);
             color: white;
+            overflow-x: hidden;
+        }
+        
+        header {
+            background: rgba(0, 0, 0, 0.7);
             padding: 1.5rem;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             position: relative;
-            overflow: hidden;
+            z-index: 10;
+            backdrop-filter: blur(5px);
         }
-
-        header::before {
-            content: "";
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 20px;
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            z-index: 2;
+        }
+        
+        .panel {
+            background: rgba(25, 25, 35, 0.9);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .panel h2 {
+            color: #4dabf7;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+        }
+        
+        .panel h2 i {
+            font-size: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #a5d8ff;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 15px;
+            background: rgba(50, 50, 70, 0.7);
+            border: 1px solid rgba(100, 100, 255, 0.3);
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            margin-top: 5px;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.3);
+        }
+        
+        .btn {
+            background: linear-gradient(90deg, #4dabf7, #3b5bdb);
+            color: white;
+            border: none;
+            padding: 16px 30px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(59, 91, 219, 0.4);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(59, 91, 219, 0.6);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn-generate {
+            background: linear-gradient(90deg, #ff6b6b, #ff8e8e);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .btn-generate:hover {
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.6);
+        }
+        
+        .video-container {
+            position: relative;
+            background: #111;
+            border-radius: 15px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .video-placeholder {
+            color: #888;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .video-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .video-player {
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,100 L0,100 Z" fill="rgba(255,255,255,0.1)"/></svg>');
-            background-size: cover;
-            opacity: 0.3;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 5;
         }
-
-        header h1 {
-            position: relative;
-            z-index: 1;
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(77, 171, 247, 0.3);
+            border-top: 5px solid #4dabf7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
         }
-
-        header h1 i {
-            margin-right: 10px;
-            color: #f1c40f;
-            animation: pulse 2s infinite;
-        }
-
-        .app-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            width: 100%;
-        }
-
-        #map-container {
-            height: 450px;
-            width: 100%;
-            background: #e0e0e0;
-            border-radius: 12px;
+        
+        .progress-container {
+            width: 80%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
             overflow: hidden;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-            margin-bottom: 25px;
-            border: 1px solid #ddd;
+            margin-top: 15px;
         }
-
-        #controls {
-            padding: 1.8rem;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-            position: relative;
+        
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, #4dabf7, #3b5bdb);
+            transition: width 0.3s ease;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .option-card {
+            background: rgba(50, 50, 70, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .option-card:hover {
+            transform: translateY(-5px);
+            background: rgba(77, 171, 247, 0.2);
+        }
+        
+        .option-card.selected {
+            border-color: #4dabf7;
+            background: rgba(77, 171, 247, 0.3);
+            box-shadow: 0 5px 15px rgba(77, 171, 247, 0.3);
+        }
+        
+        .option-card i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #4dabf7;
+        }
+        
+        .preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .preview-item {
+            border-radius: 10px;
             overflow: hidden;
+            height: 120px;
+            background: rgba(50, 50, 70, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
-
-        #controls::before {
-            content: "";
+        
+        .preview-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .preview-item i {
+            font-size: 2.5rem;
+            color: #4dabf7;
+        }
+        
+        .ai-effects {
             position: absolute;
             top: 0;
-            right: 0;
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(to bottom right, #3498db, #2c3e50);
-            clip-path: polygon(0 0, 100% 0, 100% 100%);
-            opacity: 0.05;
-        }
-
-        .search-container {
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            margin-bottom: 1.8rem;
-        }
-
-        .search-box {
-            display: flex;
-            position: relative;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 16px 16px 16px 50px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 17px;
-            background: #f9f9f9;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-            transition: all 0.3s;
-        }
-
-        .search-box input:focus {
-            border-color: #3498db;
-            outline: none;
-            box-shadow: 0 3px 12px rgba(52, 152, 219, 0.2);
-        }
-
-        .search-box i.fa-search {
-            position: absolute;
-            left: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #7f8c8d;
-            font-size: 18px;
-        }
-
-        .search-results {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-            max-height: 220px;
-            overflow-y: auto;
-            display: none;
-            z-index: 1000;
-            position: absolute;
-            top: 100%;
             left: 0;
-            right: 0;
-            margin-top: 8px;
-            border: 1px solid #eee;
-        }
-
-        .search-result-item {
-            padding: 14px 18px;
-            border-bottom: 1px solid #f0f0f0;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.2s;
-        }
-
-        .search-result-item:hover {
-            background-color: #f5f9ff;
-            transform: translateX(5px);
-        }
-
-        .search-result-item i {
-            color: #3498db;
-            min-width: 22px;
-            font-size: 18px;
-        }
-
-        .transport-types {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 1.8rem;
-        }
-
-        .transport-types button {
-            flex: 1;
-            padding: 14px;
-            background: #ecf0f1;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-        }
-
-        .transport-types button:hover {
-            background: #dde7f0;
-            transform: translateY(-3px);
-        }
-
-        .transport-types button.active {
-            background: linear-gradient(to bottom right, #3498db, #2c3e50);
-            color: white;
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
-        }
-
-        .transport-types button.active i {
-            color: white;
-            transform: scale(1.2);
-        }
-
-        .transport-types button i {
-            font-size: 28px;
-            transition: all 0.3s;
-        }
-
-        .location-controls {
-            display: flex;
-            margin-bottom: 1.5rem;
-        }
-
-        #current-location {
             width: 100%;
-            padding: 15px;
-            background: linear-gradient(to right, #2c3e50, #3498db);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            box-shadow: 0 4px 10px rgba(44, 62, 80, 0.3);
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
         }
-
-        #current-location:hover {
-            background: linear-gradient(to right, #1a252f, #2980b9);
-            transform: translateY(-2px);
+        
+        .ai-particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(77, 171, 247, 0.3);
+            animation: float 15s infinite linear;
         }
-
-        #current-location i {
-            font-size: 22px;
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-
-        .route-info {
-            background: linear-gradient(to right, #e1f5fe, #f0f9ff);
-            border-left: 5px solid #039be5;
-            padding: 18px;
-            border-radius: 8px;
-            margin-top: 1.5rem;
-            display: none;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        
+        @keyframes float {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 0.7; }
+            100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
         }
-
-        .route-info h3 {
-            color: #01579b;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 20px;
-        }
-
-        .route-info p {
-            margin: 8px 0;
-            color: #0277bd;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 17px;
-        }
-
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px;
-            border-radius: 8px;
-            background: #f8f9fa;
-            margin-top: 18px;
-            border: 1px solid #eee;
-            font-size: 17px;
-        }
-
-        .status-indicator i {
-            font-size: 22px;
-            min-width: 30px;
-        }
-
-        .success {
-            color: #27ae60;
-        }
-
-        .error {
-            color: #e74c3c;
-        }
-
-        .loading {
-            color: #3498db;
-        }
-
-        footer {
-            margin-top: auto;
-            text-align: center;
-            padding: 1.5rem;
-            background: linear-gradient(to right, #2c3e50, #34495e);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-size: 17px;
-        }
-
+        
         @media (max-width: 768px) {
-            .transport-types {
+            .container {
                 flex-direction: column;
             }
             
-            .search-box input {
-                padding: 14px 14px 14px 45px;
-                font-size: 16px;
+            header h1 {
+                font-size: 2rem;
             }
             
-            #map-container {
-                height: 380px;
-            }
-            
-            .app-container {
-                padding: 15px;
-            }
-            
-            #controls {
-                padding: 1.5rem;
-            }
-            
-            .transport-types button {
-                flex-direction: row;
-                justify-content: flex-start;
-                padding: 12px 20px;
+            .panel {
+                padding: 20px;
             }
         }
-
-        /* Animation for the car icon */
-        @keyframes drive {
-            0% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            100% { transform: translateX(-5px); }
+        
+        .video-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
         }
         
-        .fa-car {
-            animation: drive 3s infinite;
+        .video-controls button {
+            flex: 1;
+            padding: 12px;
+            background: rgba(50, 50, 70, 0.7);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
         
-        /* Animation for the bike icon */
-        @keyframes bike {
-            0% { transform: rotate(0deg); }
-            25% { transform: rotate(5deg); }
-            75% { transform: rotate(-5deg); }
-            100% { transform: rotate(0deg); }
+        .video-controls button:hover {
+            background: rgba(77, 171, 247, 0.5);
         }
         
-        .fa-bicycle {
-            animation: bike 4s infinite;
+        .video-title {
+            font-size: 1.2rem;
+            margin-top: 15px;
+            text-align: center;
+            color: #4dabf7;
         }
         
-        /* Animation for the walk icon */
-        @keyframes walk {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-            100% { transform: translateY(0); }
+        .result-container {
+            display: none;
+            margin-top: 25px;
         }
         
-        .fa-walking {
-            animation: walk 2s infinite;
-        }
-        
-        /* Pulse animation for header icon */
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+        .video-info {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(50, 50, 70, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
+    <!-- AI particles for background effect -->
+    <div class="ai-effects" id="aiEffects"></div>
+    
     <header>
-        <h1><i class="fas fa-route"></i> RouteFinder</h1>
-        <p>Find the best routes by Car, Bike, or Walking</p>
+        <h1><i class="fas fa-robot"></i> AI Video Generator</h1>
+        <p>Create custom video guides for your transportation routes</p>
     </header>
-
-    <div class="app-container">
-        <section id="map-container"></section>
+    
+    <div class="container">
+        <div class="panel">
+            <h2><i class="fas fa-cogs"></i> Video Settings</h2>
+            
+            <div class="form-group">
+                <label for="videoTitle"><i class="fas fa-heading"></i> Video Title</label>
+                <input type="text" id="videoTitle" placeholder="Enter a title for your video" value="Optimal Route from Downtown to Mountains">
+            </div>
+            
+            <div class="form-group">
+                <label for="routeType"><i class="fas fa-route"></i> Route Type</label>
+                <select id="routeType">
+                    <option value="car">Car Route</option>
+                    <option value="bike">Bike Route</option>
+                    <option value="walk">Walking Route</option>
+                    <option value="scenic">Scenic Route</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label><i class="fas fa-video"></i> Video Style</label>
+                <div class="options-grid">
+                    <div class="option-card selected" data-style="realistic">
+                        <i class="fas fa-mountain"></i>
+                        <div>Realistic</div>
+                    </div>
+                    <div class="option-card" data-style="animated">
+                        <i class="fas fa-film"></i>
+                        <div>Animated</div>
+                    </div>
+                    <div class="option-card" data-style="drone">
+                        <i class="fas fa-drone"></i>
+                        <div>Drone View</div>
+                    </div>
+                    <div class="option-card" data-style="satellite">
+                        <i class="fas fa-satellite"></i>
+                        <div>Satellite</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label><i class="fas fa-music"></i> Background Music</label>
+                <div class="options-grid">
+                    <div class="option-card selected" data-music="upbeat">
+                        <i class="fas fa-running"></i>
+                        <div>Upbeat</div>
+                    </div>
+                    <div class="option-card" data-music="calm">
+                        <i class="fas fa-wind"></i>
+                        <div>Calm</div>
+                    </div>
+                    <div class="option-card" data-music="epic">
+                        <i class="fas fa-mountain"></i>
+                        <div>Epic</div>
+                    </div>
+                    <div class="option-card" data-music="none">
+                        <i class="fas fa-volume-mute"></i>
+                        <div>None</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="duration"><i class="fas fa-clock"></i> Video Duration</label>
+                <select id="duration">
+                    <option value="30">30 seconds</option>
+                    <option value="60" selected>60 seconds</option>
+                    <option value="90">90 seconds</option>
+                    <option value="120">2 minutes</option>
+                </select>
+            </div>
+            
+            <button class="btn btn-generate" id="generateBtn">
+                <i class="fas fa-bolt"></i> Generate Video
+            </button>
+        </div>
         
-        <section id="controls">
-            <div class="search-container">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="destination" placeholder="Search for a location (e.g., Laban, Paris, etc.)">
-                    <div class="search-results" id="search-results"></div>
+        <div class="panel">
+            <h2><i class="fas fa-play-circle"></i> Video Preview</h2>
+            
+            <div class="video-container">
+                <div class="video-placeholder" id="videoPlaceholder">
+                    <i class="fas fa-video"></i>
+                    <p>Your AI-generated video will appear here</p>
                 </div>
                 
-                <div class="status-indicator" id="status">
-                    <i class="fas fa-info-circle"></i>
-                    <span>Enter a location to search</span>
+                <div class="loading" id="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Generating your AI video...</p>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                </div>
+                
+                <video class="video-player" id="videoPlayer" controls>
+                    <source src="" type="video/mp4">
+                </video>
+            </div>
+            
+            <div class="video-title" id="videoTitleDisplay">Optimal Route from Downtown to Mountains</div>
+            
+            <div class="video-controls">
+                <button id="downloadBtn"><i class="fas fa-download"></i> Download</button>
+                <button id="shareBtn"><i class="fas fa-share-alt"></i> Share</button>
+                <button id="newBtn"><i class="fas fa-plus"></i> New Video</button>
+            </div>
+            
+            <div class="result-container" id="resultContainer">
+                <h2><i class="fas fa-check-circle"></i> Video Created Successfully!</h2>
+                <div class="video-info">
+                    <div><i class="fas fa-route"></i> Route Type: <span id="routeTypeDisplay">Car Route</span></div>
+                    <div><i class="fas fa-clock"></i> Duration: <span id="durationDisplay">60</span> seconds</div>
+                </div>
+                <div class="video-info">
+                    <div><i class="fas fa-video"></i> Style: <span id="styleDisplay">Realistic</span></div>
+                    <div><i class="fas fa-music"></i> Music: <span id="musicDisplay">Upbeat</span></div>
                 </div>
             </div>
             
-            <div class="transport-types">
-                <button data-type="car">
-                    <i class="fas fa-car"></i>
-                    <span>Car</span>
-                </button>
-                <button data-type="bike">
-                    <i class="fas fa-bicycle"></i>
-                    <span>Bike</span>
-                </button>
-                <button data-type="walk">
-                    <i class="fas fa-walking"></i>
-                    <span>Walk</span>
-                </button>
+            <div class="form-group">
+                <label><i class="fas fa-lightbulb"></i> Video Suggestions</label>
+                <div class="preview-container">
+                    <div class="preview-item" data-preset="city">
+                        <i class="fas fa-city"></i>
+                    </div>
+                    <div class="preview-item" data-preset="nature">
+                        <i class="fas fa-tree"></i>
+                    </div>
+                    <div class="preview-item" data-preset="coastal">
+                        <i class="fas fa-water"></i>
+                    </div>
+                    <div class="preview-item" data-preset="night">
+                        <i class="fas fa-moon"></i>
+                    </div>
+                </div>
             </div>
-            
-            <div class="location-controls">
-                <button id="current-location">
-                    <i class="fas fa-location-dot"></i> Use My Location
-                </button>
-            </div>
-            
-            <div class="route-info" id="route-info">
-                <h3><i class="fas fa-route"></i> Route Information</h3>
-                <p id="route-summary">Enter a destination to see route information</p>
-                <p id="route-details"></p>
-            </div>
-        </section>
+        </div>
     </div>
 
-    <footer>
-        <p><i class="fas fa-heart"></i> Your personal route planning companion</p>
-    </footer>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initialize map
-        const map = L.map('map-container').setView([0, 0], 2);
-
-        // Add tile layer (OpenStreetMap)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
-
-        // Variables to store locations and markers
-        let userLocation = null;
-        let destination = null;
-        let userMarker = null;
-        let destinationMarker = null;
-        let routeLayer = null;
-
-        // Transport selection
-        const transportButtons = document.querySelectorAll('.transport-types button');
-        let selectedTransport = 'car';
-
-        transportButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                transportButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                selectedTransport = button.dataset.type;
+        // Create AI particles for background
+        function createParticles() {
+            const container = document.getElementById('aiEffects');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('ai-particle');
                 
-                // If we have both locations, recalculate route
-                if (userLocation && destination) {
-                    calculateRoute();
+                // Random size
+                const size = Math.random() * 20 + 5;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random position
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                
+                // Random animation delay
+                particle.style.animationDelay = `${Math.random() * 15}s`;
+                
+                container.appendChild(particle);
+            }
+        }
+        
+        // Initialize option cards
+        function initOptionCards() {
+            document.querySelectorAll('.option-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove selected class from siblings
+                    this.parentNode.querySelectorAll('.option-card').forEach(sibling => {
+                        sibling.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked card
+                    this.classList.add('selected');
+                });
+            });
+            
+            // Preview items
+            document.querySelectorAll('.preview-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const preset = this.getAttribute('data-preset');
+                    applyPreset(preset);
+                });
+            });
+        }
+        
+        // Apply preset settings
+        function applyPreset(preset) {
+            let title, routeType, style, music;
+            
+            switch(preset) {
+                case 'city':
+                    title = "Urban City Drive Through";
+                    routeType = "car";
+                    style = "realistic";
+                    music = "upbeat";
+                    break;
+                case 'nature':
+                    title = "Mountain Bike Adventure";
+                    routeType = "bike";
+                    style = "drone";
+                    music = "calm";
+                    break;
+                case 'coastal':
+                    title = "Coastal Walk at Sunset";
+                    routeType = "walk";
+                    style = "satellite";
+                    music = "calm";
+                    break;
+                case 'night':
+                    title = "Night Drive in the City";
+                    routeType = "car";
+                    style = "animated";
+                    music = "epic";
+                    break;
+            }
+            
+            // Apply values
+            document.getElementById('videoTitle').value = title;
+            document.getElementById('routeType').value = routeType;
+            
+            // Set selected options
+            document.querySelectorAll('.option-card').forEach(card => {
+                card.classList.remove('selected');
+                if (card.getAttribute('data-style') === style || 
+                    card.getAttribute('data-music') === music) {
+                    card.classList.add('selected');
                 }
             });
-        });
-
-        // Current location feature
-        document.getElementById('current-location').addEventListener('click', () => {
-            const statusIndicator = document.getElementById('status');
-            statusIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Detecting your location...</span>';
             
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
-                    
-                    map.setView([userLat, userLng], 15);
-                    
-                    // Remove existing user marker if any
-                    if (userMarker) {
-                        map.removeLayer(userMarker);
-                    }
-                    
-                    // Add new marker
-                    userMarker = L.marker([userLat, userLng], {
-                        icon: L.divIcon({
-                            className: 'user-location-marker',
-                            html: '<div class="pulse-dot"></div>',
-                            iconSize: [20, 20],
-                            iconAnchor: [10, 10]
-                        })
-                    }).addTo(map).bindPopup("Your Location").openPopup();
-                    
-                    // Store user location
-                    userLocation = { lat: userLat, lng: userLng };
-                    
-                    // Update status
-                    statusIndicator.innerHTML = '<i class="fas fa-check-circle success"></i> <span>Location found!</span>';
-                    
-                    // If we have a destination, calculate route
-                    if (destination) {
-                        calculateRoute();
-                    }
-                }, (error) => {
-                    let errorMessage = "Could not get your location.";
-                    if (error.code === error.PERMISSION_DENIED) {
-                        errorMessage = "Location permission denied. Please enable location services in your browser settings.";
-                    }
-                    statusIndicator.innerHTML = `<i class="fas fa-exclamation-circle error"></i> <span>${errorMessage}</span>`;
-                });
-            } else {
-                statusIndicator.innerHTML = '<i class="fas fa-exclamation-circle error"></i> <span>Geolocation is not supported by your browser</span>';
-            }
-        });
-
-        // Set car as default selected
-        document.querySelector('[data-type="car"]').classList.add('active');
-        
-        // Search functionality
-        const searchInput = document.getElementById('destination');
-        const searchResults = document.getElementById('search-results');
-        const statusIndicator = document.getElementById('status');
-        
-        // Debounce function to limit API calls
-        function debounce(func, wait) {
-            let timeout;
-            return function(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
+            // Show notification
+            showNotification(`Applied ${preset.charAt(0).toUpperCase() + preset.slice(1)} preset!`);
         }
         
-        // Search for locations
-        searchInput.addEventListener('input', debounce(function() {
-            const query = this.value.trim();
+        // Show notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.position = 'fixed';
+            notification.style.bottom = '20px';
+            notification.style.right = '20px';
+            notification.style.background = 'rgba(77, 171, 247, 0.9)';
+            notification.style.color = 'white';
+            notification.style.padding = '15px 25px';
+            notification.style.borderRadius = '10px';
+            notification.style.zIndex = '1000';
+            notification.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+            notification.style.animation = 'fadeIn 0.3s, fadeOut 0.3s 2.7s';
             
-            if (query.length < 2) {
-                searchResults.style.display = 'none';
-                statusIndicator.innerHTML = '<i class="fas fa-info-circle"></i> <span>Enter at least 2 characters to search</span>';
-                return;
-            }
+            document.body.appendChild(notification);
             
-            statusIndicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Searching locations...</span>';
-            
-            // Use Nominatim API for search
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.length > 0) {
-                        searchResults.innerHTML = '';
-                        data.slice(0, 5).forEach(result => {
-                            const item = document.createElement('div');
-                            item.className = 'search-result-item';
-                            item.innerHTML = `
-                                <i class="fas fa-map-marker-alt"></i>
-                                <div>
-                                    <strong>${result.display_name.split(',')[0]}</strong>
-                                    <div class="address">${result.display_name.split(',').slice(1, 3).join(',')}</div>
-                                </div>
-                            `;
-                            
-                            item.addEventListener('click', () => {
-                                searchInput.value = result.display_name;
-                                searchResults.style.display = 'none';
-                                
-                                // Move map to selected location
-                                const lat = parseFloat(result.lat);
-                                const lon = parseFloat(result.lon);
-                                map.setView([lat, lon], 15);
-                                
-                                // Remove existing destination marker
-                                if (destinationMarker) {
-                                    map.removeLayer(destinationMarker);
-                                }
-                                
-                                // Add new marker
-                                destinationMarker = L.marker([lat, lon], {
-                                    icon: L.icon({
-                                        iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-                                        iconSize: [25, 41],
-                                        iconAnchor: [12, 41]
-                                    })
-                                }).addTo(map).bindPopup(result.display_name).openPopup();
-                                
-                                // Store destination
-                                destination = { 
-                                    name: result.display_name,
-                                    lat: lat,
-                                    lng: lon
-                                };
-                                
-                                statusIndicator.innerHTML = `<i class="fas fa-check-circle success"></i> <span>Destination set to: ${result.display_name.split(',')[0]}</span>`;
-                                
-                                // If we have user location, show route
-                                if (userLocation) {
-                                    calculateRoute();
-                                } else {
-                                    document.getElementById('route-info').style.display = 'block';
-                                    document.getElementById('route-summary').innerHTML = 
-                                        `<i class="fas fa-info-circle"></i> Destination set to: ${result.display_name.split(',')[0]}`;
-                                    document.getElementById('route-details').innerHTML = 
-                                        'Click "Use My Location" to see route details';
-                                }
-                            });
-                            
-                            searchResults.appendChild(item);
-                        });
-                        searchResults.style.display = 'block';
-                        statusIndicator.innerHTML = `<i class="fas fa-check-circle success"></i> <span>Found ${data.length} locations</span>`;
-                    } else {
-                        searchResults.style.display = 'none';
-                        statusIndicator.innerHTML = '<i class="fas fa-exclamation-circle error"></i> <span>No locations found. Try a different search term.</span>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Search error:', error);
-                    searchResults.style.display = 'none';
-                    statusIndicator.innerHTML = `<i class="fas fa-exclamation-circle error"></i> <span>Search failed: ${error.message}</span>`;
-                });
-        }, 300));
-        
-        // Close search results when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!searchResults.contains(e.target) && e.target !== searchInput) {
-                searchResults.style.display = 'none';
-            }
-        });
-        
-        // Calculate route function
-        function calculateRoute() {
-            if (!userLocation || !destination) {
-                statusIndicator.innerHTML = '<i class="fas fa-exclamation-circle error"></i> <span>Please set both your location and destination first</span>';
-                return;
-            }
-            
-            document.getElementById('route-info').style.display = 'block';
-            document.getElementById('route-summary').innerHTML = 
-                `<i class="fas fa-sync fa-spin"></i> Calculating ${selectedTransport} route to ${destination.name.split(',')[0]}`;
-            
-            statusIndicator.innerHTML = `<i class="fas fa-sync fa-spin"></i> <span>Calculating ${selectedTransport} route...</span>`;
-            
-            // Determine transport profile
-            let profile;
-            if (selectedTransport === 'car') {
-                profile = 'driving';
-            } else if (selectedTransport === 'bike') {
-                profile = 'cycling';
-            } else if (selectedTransport === 'walk') {
-                profile = 'foot';
-            }
-            
-            // Use OSRM API for routing
-            fetch(`https://router.project-osrm.org/route/v1/${profile}/${userLocation.lng},${userLocation.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Routing service unavailable');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.routes && data.routes.length > 0) {
-                        const route = data.routes[0];
-                        
-                        // Remove existing route layer
-                        if (routeLayer) {
-                            map.removeLayer(routeLayer);
-                        }
-                        
-                        // Add new route to map
-                        routeLayer = L.geoJSON(route.geometry, {
-                            style: function() {
-                                return {
-                                    color: selectedTransport === 'bike' ? '#27ae60' : 
-                                           selectedTransport === 'walk' ? '#f39c12' : '#2980b9',
-                                    weight: 6,
-                                    opacity: 0.8
-                                };
-                            }
-                        }).addTo(map);
-                        
-                        // Fit map to route bounds
-                        map.fitBounds(routeLayer.getBounds());
-                        
-                        // Update route info
-                        const distance = (route.distance / 1000).toFixed(1);
-                        const duration = Math.floor(route.duration / 60);
-                        
-                        document.getElementById('route-summary').innerHTML = 
-                            `<i class="fas fa-check-circle" style="color:#27ae60"></i> ${selectedTransport.charAt(0).toUpperCase() + selectedTransport.slice(1)} route to ${destination.name.split(',')[0]}`;
-                            
-                        document.getElementById('route-details').innerHTML = 
-                            `<i class="fas fa-road"></i> Distance: ${distance} km | <i class="fas fa-clock"></i> Duration: ${duration} minutes`;
-                            
-                        statusIndicator.innerHTML = `<i class="fas fa-check-circle success"></i> <span>Route calculated successfully!</span>`;
-                    } else {
-                        document.getElementById('route-summary').innerHTML = 
-                            `<i class="fas fa-exclamation-triangle" style="color:#e74c3c"></i> No route found to ${destination.name.split(',')[0]}`;
-                        document.getElementById('route-details').innerHTML = 
-                            'Please try another location or transport type';
-                        statusIndicator.innerHTML = `<i class="fas fa-exclamation-circle error"></i> <span>No route found. Try a different transport mode.</span>`;
-                    }
-                })
-                .catch(error => {
-                    console.error('Routing error:', error);
-                    document.getElementById('route-summary').innerHTML = 
-                        `<i class="fas fa-exclamation-triangle" style="color:#e74c3c"></i> Error calculating route`;
-                    document.getElementById('route-details').innerHTML = 
-                        'Please try again later or check your connection';
-                    statusIndicator.innerHTML = `<i class="fas fa-exclamation-circle error"></i> <span>Routing failed: ${error.message}</span>`;
-                });
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
         }
         
-        // Initial instructions
-        map.whenReady(() => {
-            statusIndicator.innerHTML = '<i class="fas fa-info-circle"></i> <span>Enter a location to search or use "My Location"</span>';
+        // Generate video
+        function generateVideo() {
+            const videoPlaceholder = document.getElementById('videoPlaceholder');
+            const loading = document.getElementById('loading');
+            const videoPlayer = document.getElementById('videoPlayer');
+            const progressBar = document.getElementById('progressBar');
+            const resultContainer = document.getElementById('resultContainer');
             
-            // Add a sample location marker
-            const sampleLocation = L.marker([48.8566, 2.3522]).addTo(map)
-                .bindPopup('Paris, France<br>Sample location')
-                .openPopup();
-        });
+            // Get selected values
+            const title = document.getElementById('videoTitle').value;
+            const routeType = document.getElementById('routeType').value;
+            const duration = document.getElementById('duration').value;
+            
+            const selectedStyle = document.querySelector('.option-card.selected[data-style]');
+            const selectedMusic = document.querySelector('.option-card.selected[data-music]');
+            
+            const style = selectedStyle ? selectedStyle.getAttribute('data-style') : 'realistic';
+            const music = selectedMusic ? selectedMusic.getAttribute('data-music') : 'upbeat';
+            
+            // Update display elements
+            document.getElementById('videoTitleDisplay').textContent = title;
+            document.getElementById('routeTypeDisplay').textContent = 
+                routeType === 'car' ? 'Car Route' : 
+                routeType === 'bike' ? 'Bike Route' : 
+                routeType === 'walk' ? 'Walking Route' : 'Scenic Route';
+                
+            document.getElementById('durationDisplay').textContent = duration;
+            document.getElementById('styleDisplay').textContent = 
+                style === 'realistic' ? 'Realistic' : 
+                style === 'animated' ? 'Animated' : 
+                style === 'drone' ? 'Drone View' : 'Satellite';
+                
+            document.getElementById('musicDisplay').textContent = 
+                music === 'upbeat' ? 'Upbeat' : 
+                music === 'calm' ? 'Calm' : 
+                music === 'epic' ? 'Epic' : 'None';
+            
+            // Show loading screen
+            videoPlaceholder.style.display = 'none';
+            videoPlayer.style.display = 'none';
+            loading.style.display = 'flex';
+            resultContainer.style.display = 'none';
+            
+            // Simulate progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    
+                    // Hide loading and show video
+                    loading.style.display = 'none';
+                    
+                    // Set video source based on route type
+                    let videoSource;
+                    if (routeType === 'car') {
+                        videoSource = 'https://assets.mixkit.co/videos/preview/mixkit-countryside-road-at-sunset-34337-large.mp4';
+                    } else if (routeType === 'bike') {
+                        videoSource = 'https://assets.mixkit.co/videos/preview/mixkit-cyclist-on-a-mountain-road-34508-large.mp4';
+                    } else if (routeType === 'walk') {
+                        videoSource = 'https://assets.mixkit.co/videos/preview/mixkit-walking-in-a-forest-34510-large.mp4';
+                    } else {
+                        videoSource = 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-curved-road-in-a-forested-mountain-34509-large.mp4';
+                    }
+                    
+                    videoPlayer.src = videoSource;
+                    videoPlayer.style.display = 'block';
+                    videoPlayer.load();
+                    
+                    // Show result container
+                    resultContainer.style.display = 'block';
+                    
+                    // Show notification
+                    showNotification('Video generation complete!');
+                }
+                progressBar.style.width = `${progress}%`;
+            }, 300);
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('generateBtn').addEventListener('click', generateVideo);
+            
+            document.getElementById('downloadBtn').addEventListener('click', function() {
+                showNotification('Download started!');
+            });
+            
+            document.getElementById('shareBtn').addEventListener('click', function() {
+                showNotification('Sharing options displayed!');
+            });
+            
+            document.getElementById('newBtn').addEventListener('click', function() {
+                document.getElementById('videoPlaceholder').style.display = 'flex';
+                document.getElementById('videoPlayer').style.display = 'none';
+                document.getElementById('resultContainer').style.display = 'none';
+                showNotification('Ready to create a new video!');
+            });
+        }
+        
+        // Initialize when page loads
+        window.onload = function() {
+            createParticles();
+            initOptionCards();
+            setupEventListeners();
+            
+            // Add CSS for notifications
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                
+                @keyframes fadeOut {
+                    from { opacity: 1; transform: translateY(0); }
+                    to { opacity: 0; transform: translateY(20px); }
+                }
+            `;
+            document.head.appendChild(style);
+        };
     </script>
 </body>
 </html>
