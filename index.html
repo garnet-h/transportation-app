@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FreeTransport App - Fixed Search</title>
+    <title>RouteFinder - Car, Bike & Walk</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -23,16 +23,36 @@
         }
 
         header {
-            background-color: #2c3e50;
+            background: linear-gradient(to right, #2c3e50, #3498db);
             color: white;
             padding: 1.5rem;
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,100 L0,100 Z" fill="rgba(255,255,255,0.1)"/></svg>');
+            background-size: cover;
+            opacity: 0.3;
+        }
+
+        header h1 {
+            position: relative;
+            z-index: 1;
         }
 
         header h1 i {
             margin-right: 10px;
-            color: #3498db;
+            color: #f1c40f;
+            animation: pulse 2s infinite;
         }
 
         .app-container {
@@ -46,24 +66,39 @@
             height: 450px;
             width: 100%;
             background: #e0e0e0;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            margin-bottom: 25px;
+            border: 1px solid #ddd;
         }
 
         #controls {
-            padding: 1.5rem;
+            padding: 1.8rem;
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #controls::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(to bottom right, #3498db, #2c3e50);
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+            opacity: 0.05;
         }
 
         .search-container {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            margin-bottom: 1.5rem;
+            gap: 18px;
+            margin-bottom: 1.8rem;
         }
 
         .search-box {
@@ -73,33 +108,35 @@
 
         .search-box input {
             flex: 1;
-            padding: 15px 15px 15px 45px;
+            padding: 16px 16px 16px 50px;
             border: 2px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
+            border-radius: 8px;
+            font-size: 17px;
             background: #f9f9f9;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: border-color 0.3s;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s;
         }
 
         .search-box input:focus {
             border-color: #3498db;
             outline: none;
+            box-shadow: 0 3px 12px rgba(52, 152, 219, 0.2);
         }
 
         .search-box i.fa-search {
             position: absolute;
-            left: 15px;
+            left: 18px;
             top: 50%;
             transform: translateY(-50%);
             color: #7f8c8d;
+            font-size: 18px;
         }
 
         .search-results {
             background: white;
-            border-radius: 4px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            max-height: 220px;
             overflow-y: auto;
             display: none;
             z-index: 1000;
@@ -107,123 +144,149 @@
             top: 100%;
             left: 0;
             right: 0;
-            margin-top: 5px;
+            margin-top: 8px;
+            border: 1px solid #eee;
         }
 
         .search-result-item {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
+            padding: 14px 18px;
+            border-bottom: 1px solid #f0f0f0;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 10px;
-            transition: background-color 0.2s;
+            gap: 12px;
+            transition: all 0.2s;
         }
 
         .search-result-item:hover {
-            background-color: #f1f2f6;
+            background-color: #f5f9ff;
+            transform: translateX(5px);
         }
 
         .search-result-item i {
             color: #3498db;
-            min-width: 20px;
+            min-width: 22px;
+            font-size: 18px;
         }
 
         .transport-types {
             display: flex;
-            gap: 12px;
-            margin-bottom: 1.5rem;
+            gap: 15px;
+            margin-bottom: 1.8rem;
         }
 
         .transport-types button {
             flex: 1;
-            padding: 12px;
+            padding: 14px;
             background: #ecf0f1;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            font-weight: 500;
+            gap: 10px;
+            font-weight: 600;
             transition: all 0.3s ease;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
         }
 
         .transport-types button:hover {
-            background: #d5dbdb;
+            background: #dde7f0;
+            transform: translateY(-3px);
         }
 
         .transport-types button.active {
-            background: #3498db;
+            background: linear-gradient(to bottom right, #3498db, #2c3e50);
             color: white;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
         }
 
         .transport-types button.active i {
             color: white;
+            transform: scale(1.2);
+        }
+
+        .transport-types button i {
+            font-size: 28px;
+            transition: all 0.3s;
         }
 
         .location-controls {
             display: flex;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         #current-location {
             width: 100%;
-            padding: 12px;
-            background: #2c3e50;
+            padding: 15px;
+            background: linear-gradient(to right, #2c3e50, #3498db);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            transition: background 0.3s ease;
+            gap: 10px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(44, 62, 80, 0.3);
         }
 
         #current-location:hover {
-            background: #1a252f;
+            background: linear-gradient(to right, #1a252f, #2980b9);
+            transform: translateY(-2px);
+        }
+
+        #current-location i {
+            font-size: 22px;
         }
 
         .route-info {
-            background: #e1f5fe;
-            border-left: 4px solid #039be5;
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 1rem;
+            background: linear-gradient(to right, #e1f5fe, #f0f9ff);
+            border-left: 5px solid #039be5;
+            padding: 18px;
+            border-radius: 8px;
+            margin-top: 1.5rem;
             display: none;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
         }
 
         .route-info h3 {
             color: #01579b;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            font-size: 20px;
         }
 
         .route-info p {
-            margin: 5px 0;
+            margin: 8px 0;
             color: #0277bd;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            font-size: 17px;
         }
 
         .status-indicator {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 10px;
-            border-radius: 4px;
+            gap: 12px;
+            padding: 14px;
+            border-radius: 8px;
             background: #f8f9fa;
-            margin-top: 15px;
+            margin-top: 18px;
+            border: 1px solid #eee;
+            font-size: 17px;
         }
 
         .status-indicator i {
-            font-size: 18px;
+            font-size: 22px;
+            min-width: 30px;
         }
 
         .success {
@@ -241,13 +304,14 @@
         footer {
             margin-top: auto;
             text-align: center;
-            padding: 1.2rem;
-            background: #34495e;
+            padding: 1.5rem;
+            background: linear-gradient(to right, #2c3e50, #34495e);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
+            font-size: 17px;
         }
 
         @media (max-width: 768px) {
@@ -256,23 +320,75 @@
             }
             
             .search-box input {
-                padding: 12px 12px 12px 40px;
+                padding: 14px 14px 14px 45px;
+                font-size: 16px;
             }
             
             #map-container {
-                height: 400px;
+                height: 380px;
             }
             
             .app-container {
-                padding: 10px;
+                padding: 15px;
             }
+            
+            #controls {
+                padding: 1.5rem;
+            }
+            
+            .transport-types button {
+                flex-direction: row;
+                justify-content: flex-start;
+                padding: 12px 20px;
+            }
+        }
+
+        /* Animation for the car icon */
+        @keyframes drive {
+            0% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            100% { transform: translateX(-5px); }
+        }
+        
+        .fa-car {
+            animation: drive 3s infinite;
+        }
+        
+        /* Animation for the bike icon */
+        @keyframes bike {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
+        }
+        
+        .fa-bicycle {
+            animation: bike 4s infinite;
+        }
+        
+        /* Animation for the walk icon */
+        @keyframes walk {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0); }
+        }
+        
+        .fa-walking {
+            animation: walk 2s infinite;
+        }
+        
+        /* Pulse animation for header icon */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
     <header>
-        <h1><i class="fas fa-bus"></i> FreeTransport App</h1>
-        <p>Search for locations and find the best routes</p>
+        <h1><i class="fas fa-route"></i> RouteFinder</h1>
+        <p>Find the best routes by Car, Bike, or Walking</p>
     </header>
 
     <div class="app-container">
@@ -293,14 +409,17 @@
             </div>
             
             <div class="transport-types">
-                <button data-type="bus">
-                    <i class="fas fa-bus"></i> Bus
-                </button>
-                <button data-type="train">
-                    <i class="fas fa-train"></i> Train
+                <button data-type="car">
+                    <i class="fas fa-car"></i>
+                    <span>Car</span>
                 </button>
                 <button data-type="bike">
-                    <i class="fas fa-bicycle"></i> Bike
+                    <i class="fas fa-bicycle"></i>
+                    <span>Bike</span>
+                </button>
+                <button data-type="walk">
+                    <i class="fas fa-walking"></i>
+                    <span>Walk</span>
                 </button>
             </div>
             
@@ -319,7 +438,7 @@
     </div>
 
     <footer>
-        <p><i class="fas fa-heart"></i> Your free transportation companion</p>
+        <p><i class="fas fa-heart"></i> Your personal route planning companion</p>
     </footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -341,7 +460,7 @@
 
         // Transport selection
         const transportButtons = document.querySelectorAll('.transport-types button');
-        let selectedTransport = 'bus';
+        let selectedTransport = 'car';
 
         transportButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -405,8 +524,8 @@
             }
         });
 
-        // Set bus as default selected
-        document.querySelector('[data-type="bus"]').classList.add('active');
+        // Set car as default selected
+        document.querySelector('[data-type="car"]').classList.add('active');
         
         // Search functionality
         const searchInput = document.getElementById('destination');
@@ -537,11 +656,13 @@
             statusIndicator.innerHTML = `<i class="fas fa-sync fa-spin"></i> <span>Calculating ${selectedTransport} route...</span>`;
             
             // Determine transport profile
-            let profile = 'driving'; // default for bus/train
-            if (selectedTransport === 'bike') {
+            let profile;
+            if (selectedTransport === 'car') {
+                profile = 'driving';
+            } else if (selectedTransport === 'bike') {
                 profile = 'cycling';
-            } else if (selectedTransport === 'train') {
-                profile = 'driving'; // No train-specific profile, using driving as approximation
+            } else if (selectedTransport === 'walk') {
+                profile = 'foot';
             }
             
             // Use OSRM API for routing
@@ -566,9 +687,9 @@
                             style: function() {
                                 return {
                                     color: selectedTransport === 'bike' ? '#27ae60' : 
-                                           selectedTransport === 'train' ? '#8e44ad' : '#2980b9',
-                                    weight: 5,
-                                    opacity: 0.7
+                                           selectedTransport === 'walk' ? '#f39c12' : '#2980b9',
+                                    weight: 6,
+                                    opacity: 0.8
                                 };
                             }
                         }).addTo(map);
@@ -608,6 +729,11 @@
         // Initial instructions
         map.whenReady(() => {
             statusIndicator.innerHTML = '<i class="fas fa-info-circle"></i> <span>Enter a location to search or use "My Location"</span>';
+            
+            // Add a sample location marker
+            const sampleLocation = L.marker([48.8566, 2.3522]).addTo(map)
+                .bindPopup('Paris, France<br>Sample location')
+                .openPopup();
         });
     </script>
 </body>
